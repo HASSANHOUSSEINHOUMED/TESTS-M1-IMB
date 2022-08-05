@@ -1,0 +1,183 @@
+---
+title: "DM_Tests_Groupe_3"
+author: "Sarah-Hassan-Rachidou"
+date: "09/12/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Test de Mann-Whitney
+
+## 1- Cadre d'application du test
+
+Le test de Mann-Whitney est utilisé quand nous disposons de deux échantillons indépendant et qu'on désire savoir si l'un à tendance à prendre des valeurs plus grandes que l'autre.
+
+Ainsi à la fin du test nous pourrons savoir si les valeurs d'un échantillons sont significativement plus grandes que celle de l'autre ou si la différence n'est pas significative.
+
+Soient $X_{1},... X_{n_{1}}$ et $Y_{1},..., Y_{n_{2}}$ les deux échantillons indépendant qu'on considère dans la suite.
+
+Ainsi on souhaiterait tester
+
+$$
+\left\{\begin{array}{c}
+H_{0}: \text { "Les valeurs de } Y \text { ne sont pas significativement différentes de celles de } X^{\prime \prime} \\
+H_{1}: " Y \text { à tendance à prendre des valeurs différentes de celles de } X^{\prime \prime}
+\end{array}\right.
+$$
+
+## 2- L'intérêt de $Med(Y - X)$
+
+Puisqu'on essai de répondre à la question d'égalité des distributions, la quantité $Med(Y - X)$ est importante dans la mesure où si les distributions sont identiques alors cette quantité devrait être nulle. Inversement si Y à tendance à prendre des valeurs différentes de X, alors cette quantité sera différente de 0. Donc tester l'égalité des distributions revient à tester si $Med(Y - X) = 0$. Ainsi le teste devient $$
+\left\{\begin{array}{l}
+H_{0}: \operatorname{Med}(Y-X)=0 \\
+H_{1}: \operatorname{Med}(Y-X) \neq 0
+\end{array}\right.
+$$
+
+## 3. L'intérêt de la statistique $T_{n_{1}n_{2}}$
+
+$$
+T_{n_{1}, n_{2}}=\frac{1}{n_{1} n_{2}} \sum_{i=1}^{n_{1}} \sum_{j=1}^{n_{2}}\left(1_{X_{i}<Y_{j}}-0.5\right)
+$$ On peut écrire
+
+$$
+T_{n_{1}, n_{2}}=\frac{1}{n_{1} n_{2}} \sum_{i=1}^{n_{1}} \sum_{j=1}^{n_{2}}\left(1_{X_{i}<Y_{j}}\right) -0.5
+$$
+
+Soit $\varepsilon_{i j}=1_{X_{i}<Y_{j}}$.
+
+On sait que $\varepsilon{i j} \sim \mathcal{B}(P(X{i} < Y_{j}))$
+
+Ainsi
+
+$$
+\frac{1}{n_{1} n_{2}} \sum_{i=1}^{n_{1}} \sum_{j=1}^{n_{2}}\varepsilon_{i j} \
+$$ est une moyenne empirique et par la loi forte des grand nombre converge vers $\mathbb{E}[\varepsilon_{1 1} ]$.
+
+### Sous $H_{0}$
+
+$P(X_{i} < Y_{j}) = \frac{1}{2}$
+
+Donc $\frac{1}{n_{1} n_{2}} \sum_{i=1}^{n_{1}}\sum_{j=1}^{n_{2}}\varepsilon_{i j}$ converge vers 0.5. Par conséquent $T_{n_{1}n_{2}}$ converge vers 0 sous $H_{0}$
+
+-   En résumé quand les distributions des deux échantillons ne sont pas différentes, i.e $\mathcal{L}(X)=\mathcal{L}(Y)$, on s'attent à ce que la statistique $T_{n_{1}n_{2}}$ sois proche de 0.
+
+-   Par contre si le support de X et celui de Y sont disjoint alors $T_{n_{1}n_{2}}$ s'écartent de $0$ en tendant vers $0.5$ ou $-0.5$.
+
+## 4- Hypothèses sous laquelle la loi de $T_{n_{1}n_{2}}$ à été déterminer.
+
+La loi de $T_{n_{1}n_{2}}$ est connu si et seulement si $X_i$ et $Y_i$ ont la même la loi. Dans ce cas $T_{n_{1}n_{2}}$ est libre. Mais cette hypothèse est problématique dans la mesure où quand les distributions seront différentes $T_{n_{1}n_{2}}$ n'a plus de raison d'être libre. Ainsi le test aura tendance à rejeter plus souvent $H_0$ à tord. C'est la raison pour laquelle les auteurs affirment que ce test est mal calibré pour tester $Med(Y-X)=0$.
+
+## 5- Comment le test à été modifier afin qu'il soit bien calibré
+
+Pour résoudre le problème les auteurs proposent d'utiliser la loi limite de $T_{n_{1}n_{2}}$ sous $H_0$. Ainsi en normalisant par les variances respectivent la nouvelle statistique nommé $MW_{n_{1}n_{2}}$ obtenu convergera vers une loi normale centrée réduite asymptotiquement.
+
+## 6- Illustrons le fait que le test de Mann-Whitney initial est mal calibré
+
+```{r}
+
+## Deux vecteurs qui contiennent les différentes 
+## tailles d'échantillon avec N2 = 3*N1
+
+N1 = seq(20, 100, 10)
+N2 = seq(60, 300, 30)
+
+## On initialise la fréquence de rejet
+f <- 0
+
+## On initialise un vecteur qui contient les différentes 
+## fréquence de rejet pour chaque taille d'échantillon
+
+test1 <- vector(length = length(N1))
+
+## Une bpucle qui parcours toutes les tailles d'échantillon
+for (j in 1:(length(N1))) {
+  ## Une autre boucle dans laquelle on simule 2000 
+  ## échantillons en faisant le test sur chacun d'eux
+  for (i in 1:2000) {
+    ## Selon une loi uniforme
+    x <- runif(N1[j], min = -0.5, max = 0.5)
+    
+    ## selon une loi normale
+    y <- rnorm(N2[j], mean = 0, sd = 0.04) 
+    
+    ## On vérifie si la p-valeur de chaque test 
+    ## est inférieur à 5% (rejet de H0)
+    
+    ## Une indicatrice qui prend 1 quand on rejette H0 et 0 sinon
+    
+    ## Qu'on rajoute dans f a chaque itération
+    f <- f + (wilcox.test(x, y)$p.value < 0.05)  
+  }
+  ## on stock les fréquences de rejet correspondantes dans test1 et 
+  ## On réinitialise la valeur de f,
+  ## Avant de changer d'itération.
+  test1[j] <- f/2000
+  f <- 0
+  
+}
+test1
+```
+
+On remarque que les fréquences de rejet moyenne pour les différents échantillons oscillent entre 16% et 18%, alors que le niveau de rejet est fixé à 5%. Ce qui souligne le fait que le test basé sur la statistique $T_{n_{1}, n_{2}}$ n'est pas bien calibré pour tester $med(Y-X) = 0$.
+
+## 7- Vérifions que la correction proposée par les auteurs abouti à un test bien calibré
+
+Maintenant on utilise la version corrigée proposé par les auteurs dont le code est présenté ci-dessous.
+
+```{r}
+CMW=function(X,Y)
+  {
+  n <- length(X)
+  m <- length(Y)
+  R <- array(0,dim=c(n,m))
+  for(i in 1:n)
+    {
+    for(j in 1:m)
+      {
+      R[i,j]<-(Y[j]>X[i])
+    }
+  }
+  
+  H <- vector(mode = "numeric", length = n)
+  H <- apply(R,1,mean)
+  G <- vector(mode = "numeric", length = m)
+  G <- apply(R,2,mean)
+  V <- var(H)/n + var(G)/m
+  Tr <- (mean(R)-0.5)/sqrt(V)
+  Pval <- 1-pnorm(abs(Tr))+pnorm(-abs(Tr))
+  return(Pval)
+}
+```
+
+On applique cette fonction dans notre simulation des 2000 échantillons excatement comme précedemment.
+
+```{r}
+N1 = seq(20, 100, 10)
+N2 = seq(60, 300, 30)
+
+
+f <- 0
+
+test2 <- vector(length = length(N1))
+
+for (j in 1:(length(N1))) {
+  for (i in 1:2000) {
+    x <- runif(N1[j], min = -0.5, max = 0.5)
+    y <- rnorm(N2[j], mean = 0, sd = 0.04) 
+    f <- f + (CMW(x, y) < 0.05)  
+  }
+  test2[j] <- f/2000
+  f <- 0
+}
+test2
+```
+
+On remarque bien cette fois que la fréquence de rejet converge vers 5%. D'où le fait que la statistique de test est bien calibrée.
