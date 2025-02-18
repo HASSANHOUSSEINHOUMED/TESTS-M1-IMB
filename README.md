@@ -1,2 +1,2 @@
-# TESTS-M1-IMB
-C'ést un devoir à la maison que j'ai réaliser en groupe de 3 personnes dans le matière tests en semestre 1 de M1 IMB.
+# Test Statistiques
+Projet académique de tests statistiques réalisé en équipe de 3 étudiants durant le premier semestre de Master 1 Ingénierie Mathématique et Biostatistique. L'objectif était d'implémenter différents tests statistiques en langage R.
